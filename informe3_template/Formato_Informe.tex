@@ -1,0 +1,101 @@
+\documentclass[12pt, letterpaper]{article}
+
+% --- Paquetes Básicos ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish, es-tabla]{babel} % Configuración en español
+\usepackage[margin=2.5cm]{geometry} % Márgenes
+\usepackage{graphicx} % Para insertar imágenes
+\usepackage{amsmath, amsfonts, amssymb} % Matemáticas avanzadas
+\usepackage{float} % Control de ubicación de figuras
+\graphicspath{{images/}}
+\usepackage{hyperref} % Enlaces y marcadores
+\usepackage[numbers,sort&compress]{natbib} % Estilo de citación numérica
+\usepackage[numbers,sort&compress]{natbib} % Estilo de citación numérica
+\bibliographystyle{ieeetr} % Estilo de bibliografía IEEE
+% --- Inicio del Documento ---
+\begin{document}
+
+% --- PORTADA ---
+\begin{titlepage}
+    \centering
+    {\bfseries\LARGE Universidad Tecnológica Metropolitana} \\
+    \vspace{0.3cm}
+    {\large Facultad de Ingeniería / Ingeniería Civil en Electrónica} \\
+    \vspace{0.1cm}
+    {\large Departamento de Electricidad} \\
+    
+    \vspace{1.5cm}
+    \includegraphics[width=0.2\textwidth]{logo_utem.png} \\ % Asegúrate de subir el logo como logo_utem.png
+    \vspace{1.5cm}
+    
+    {\scshape\Large Informe de Laboratorio N°X} \\
+    \vspace{0.5cm}
+    {\bfseries\huge Título del Experimento o Práctica} \\
+    
+    \vfill
+    
+    \begin{flushleft}
+    \textbf{Asignatura:} [Nombre de la Asignatura] \\
+    \textbf{Profesor:} [Nombre del Docente] \\
+    \textbf{Sección:} [Ej: Sección 1]
+    \end{flushleft}
+    
+    \vspace{0.8cm}
+    
+    \begin{flushright}
+    \textbf{Integrantes:} \\
+    Nombre Estudiante 1 \\
+    Nombre Estudiante 2 \\
+    \vspace{0.5cm}
+    \textbf{Fecha de realización:} \today \\
+    \textbf{Fecha de entrega:} \today
+    \end{flushright}
+    
+\end{titlepage}
+
+\newpage
+
+% --- ÍNDICE ---
+\tableofcontents
+\newpage
+
+% --- CONTENIDO ---
+
+\section{Introducción}
+Breve descripción del contexto del laboratorio y qué se espera lograr.
+
+\section{Objetivos}
+\begin{itemize}
+    \item \textbf{Objetivo General:} Lo que se busca alcanzar globalmente.
+    \item \textbf{Objetivos Específicos:} Pasos detallados para cumplir el general.
+\end{itemize}
+
+\section{Marco Teórico}
+Aquí defines los conceptos necesarios. Por ejemplo, la ley de Ohm \cite{serway2018}:
+$V = I \cdot R$. 
+
+\section{Materiales y Metodología}
+Lista de instrumentos utilizados y descripción del procedimiento paso a paso.
+
+\section{Resultados y Análisis}
+Presentación de los datos obtenidos. Puedes usar tablas:
+
+\begin{table}[H]
+    \centering
+    \caption{Datos obtenidos en la medición.}
+    \begin{tabular}{|c|c|c|}
+    \hline
+    \textbf{Muestra} & \textbf{Voltaje (V)} & \textbf{Corriente (A)} \\ \hline
+    1 & 5.0 & 0.25 \\ \hline
+    2 & 10.0 & 0.50 \\ \hline
+    \end{tabular}
+\end{table}
+
+\section{Conclusiones}
+Resumen de los hallazgos y si se cumplieron los objetivos propuestos.
+
+\newpage
+\addcontentsline{toc}{section}{Referencias} % Para que aparezca en el índice
+\bibliography{referencias} % El nombre de tu archivo .bib (sin la extensión)
+
+\end{document}
