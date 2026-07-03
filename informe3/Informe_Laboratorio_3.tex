@@ -10,6 +10,8 @@
 \usepackage{booktabs}
 \usepackage{xcolor}
 \usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 \graphicspath{{images/}}
 \bibliographystyle{ieeetr}
 
@@ -84,7 +86,7 @@ Para evitar repetir procedimientos equivalentes, este informe integra ambas expe
 
 El sistema se basa en una separación de responsabilidades. La ESP32-CAM trabaja como nodo de borde encargado de capturar y transmitir imágenes; la Raspberry Pi 4 actúa como servidor de niebla o nodo de procesamiento. Esta división es necesaria porque la ESP32-CAM no cuenta con recursos suficientes para ejecutar modelos de detección como YOLOv8 en tiempo real.
 
-El video se transmite como MJPEG sobre HTTP, protocolo simple en el que cada frame viaja como una imagen JPEG independiente. OpenCV puede abrir este stream como si fuera una cámara local. Para la inferencia se usó YOLOv8 Nano exportado a ONNX, ejecutado mediante OpenCV DNN, evitando el uso directo de PyTorch debido a incompatibilidades observadas en la Raspberry.
+El video se transmite como MJPEG sobre HTTP, protocolo simple en el que cada frame viaja como una imagen JPEG independiente. OpenCV puede abrir este stream como si fuera una cámara local. Para la inferencia se usó YOLOv8 Nano exportado a ONNX, ejecutado mediante OpenCV DNN, evitando el uso directo de PyTorch debido a incompatibilidades observadas en la Raspberry. YOLO utiliza redes neuronales convolucionales (CNN), que extraen características visuales mediante filtros y predicen cajas delimitadoras y clases en una sola pasada.
 
 Para el reconocimiento de patentes se evaluó EasyOCR, pero durante la prueba real presentó fallos de \textit{illegal instruction} asociados a PyTorch. Por esta razón se utilizó Tesseract 5.5.0 como ruta OCR operativa, aplicando recorte de la zona de patente, escala de grises, binarización y normalización del texto.
 
@@ -122,6 +124,30 @@ La Figura \ref{fig:arquitectura} resume la arquitectura implementada. La ESP32-C
     \label{fig:arquitectura}
 \end{figure}
 
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.8cm,
+        block/.style={draw, rounded corners, align=center, minimum width=3.6cm, minimum height=0.9cm},
+        arrow/.style={-Latex, thick}
+    ]
+        \node[block] (cam) {ESP32-CAM / Webcam\\captura frame};
+        \node[block, below=of cam] (stream) {MJPEG HTTP o\\\texttt{VideoCapture(0)}};
+        \node[block, below=of stream] (pre) {OpenCV\\lectura y preproceso};
+        \node[block, below left=0.8cm and 0.6cm of pre] (yolo) {YOLOv8n ONNX\\personas/vehiculos};
+        \node[block, below right=0.8cm and 0.6cm of pre] (ocr) {ROI patente\\binarizacion + OCR};
+        \node[block, below=2.1cm of pre] (decision) {Aforo o control\\autorizado/no autorizado};
+        \draw[arrow] (cam) -- (stream);
+        \draw[arrow] (stream) -- (pre);
+        \draw[arrow] (pre) -- (yolo);
+        \draw[arrow] (pre) -- (ocr);
+        \draw[arrow] (yolo) -- (decision);
+        \draw[arrow] (ocr) -- (decision);
+    \end{tikzpicture}
+    \caption{Diagrama de flujo del procesamiento implementado.}
+    \label{fig:flujo}
+\end{figure}
+
 \subsection{ESP32-CAM y transmisión MJPEG}
 
 El firmware de la ESP32-CAM inicializa el sensor OV2640, configura salida JPEG y expone dos rutas HTTP: \texttt{/capture} para capturas individuales y \texttt{:81/stream} para video MJPEG continuo. Para mejorar estabilidad y FPS se redujo la resolución a QVGA (320x240), se ajustó la compresión JPEG y se desactivó el ahorro de energía Wi-Fi.
@@ -153,10 +179,11 @@ Para el reto del Laboratorio 3 se dibujó una línea virtual horizontal y se cal
 
 \subsection{Preparación de Raspberry Pi para el Laboratorio 4}
 
-La guía del Laboratorio 4 pide comprobar sistema operativo de 64 bits, entorno virtual, cámara y librerías de visión artificial. En esta Raspberry se verificó OpenCV, Ultralytics, EasyOCR y Tesseract. La cámara CSI/NoIR indicada por la guía no fue detectada por \texttt{rpicam}, pero sí se detectó y probó una webcam USB Logitech C170 en \texttt{/dev/video0}. La captura local funcionó a 640x480.
+La guía del Laboratorio 4 pide comprobar sistema operativo de 64 bits, entorno virtual, cámara y librerías de visión artificial. En esta Raspberry se verificó arquitectura \texttt{aarch64}, OpenCV, Ultralytics, EasyOCR y Tesseract. La cámara CSI/NoIR indicada por la guía no fue detectada por \texttt{rpicam}, pero sí se detectó y probó una webcam USB Logitech C170 en \texttt{/dev/video0}. La captura local funcionó a 640x480.
 
 \begin{lstlisting}[language=bash, caption={Verificación resumida del entorno.}]
 Version de Python: 3.13.5
+Arquitectura: aarch64 / 64 bits
 Version de OpenCV: 5.0.0
 Ultralytics (YOLOv8): OK
 EasyOCR: OK
@@ -190,6 +217,7 @@ Para la prueba ANPR/ALPR se mostró una patente desde un teléfono frente a la c
     Modelo de detección & YOLOv8n ONNX \\
     Frecuencia de inferencia & 1 inferencia cada 4 frames \\
     FPS observado en prueba & 2.67 FPS de visualización \\
+    Latencia estimada de visualización & 0.37 s por frame observado \\
     OCR operativo & Tesseract 5.5.0 \\
     Patente leída & \texttt{BBBB10} \\
     Resultado de acceso & Autorizado \\
@@ -217,8 +245,8 @@ El rendimiento quedó limitado principalmente por CPU y por la transmisión MJPE
     Verificación de cámara en Raspberry & Cumplido con ajuste & No se detectó cámara CSI/NoIR; se usó webcam USB funcional. \\
     Reconocimiento de patentes & Cumplido & Lectura \texttt{BBBB10} y decisión de acceso autorizado. \\
     Alerta o salida de acceso & Cumplido & Señal visual en pantalla: acceso autorizado/no autorizado. \\
-    Repositorio de código & Parcial & Se entrega código limpio y \texttt{requirements.txt}; falta subirlo a GitHub si el docente lo exige. \\
-    Video demostrativo & Parcial & La demostración fue en vivo; se incluye evidencia fotográfica en el informe. \\
+    Repositorio de código & Cumplido & \url{https://github.com/ZharOOX/microprocesadores-Utem}. \\
+    Video o presentación demostrativa & Cumplido & Se realizó demostración en vivo y se incluye evidencia fotográfica. \\
     \bottomrule
     \end{tabular}
 \end{table}
@@ -238,6 +266,7 @@ La principal limitación fue el rendimiento de inferencia en CPU. Aun así, el s
     ANPR por consola y visor web.
     \item Dependencias Python: \texttt{requirements.txt}.
     \item Modelo: \texttt{yolov8n.onnx}.
+    \item Repositorio GitHub: \url{https://github.com/ZharOOX/microprocesadores-Utem}.
     \item Evidencia fotográfica incorporada en este informe.
 \end{itemize}
 
